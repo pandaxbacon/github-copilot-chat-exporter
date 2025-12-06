@@ -4,6 +4,8 @@
 ![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)
 ![Playwright](https://img.shields.io/badge/playwright-1.48.0-green)
 [![Homebrew](https://img.shields.io/badge/homebrew-pandaxbacon%2Ftap-orange)](https://github.com/pandaxbacon/homebrew-tap)
+[![Python CI](https://github.com/pandaxbacon/github-copilot-chat-exporter/actions/workflows/python-ci.yml/badge.svg)](https://github.com/pandaxbacon/github-copilot-chat-exporter/actions)
+[![codecov](https://codecov.io/gh/pandaxbacon/github-copilot-chat-exporter/branch/main/graph/badge.svg)](https://codecov.io/gh/pandaxbacon/github-copilot-chat-exporter)
 
 **Export GitHub Copilot shared conversations to clean Markdown and PDF. No API key required!**
 
@@ -243,6 +245,37 @@ python scraper_playwright.py --mode login --url <SHARE_URL>
 | ✅ macOS   | Fully supported |
 | ✅ Linux   | Fully supported |
 | ✅ Windows | Fully supported |
+
+## Development
+
+### Running Tests
+
+```bash
+# Install dev dependencies
+pip install -r requirements-dev.txt
+
+# Run tests
+pytest
+
+# Run tests with coverage
+pytest --cov=. --cov-report=html
+
+# View coverage report
+open htmlcov/index.html
+```
+
+### Code Quality
+
+```bash
+# Format code
+black scraper_playwright.py scraper_requests.py
+
+# Lint
+flake8 scraper_playwright.py scraper_requests.py
+
+# Type check
+mypy scraper_playwright.py scraper_requests.py
+```
 
 ## Contributing
 

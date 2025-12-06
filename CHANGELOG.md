@@ -20,6 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Personal tap for easy installation on macOS/Linux
   - Automated Python environment and Playwright setup
 
+- **CI/CD Pipeline**
+  - GitHub Actions workflow for automated testing
+  - Multi-OS testing (Ubuntu, macOS, Windows)
+  - Multi-Python version testing (3.9, 3.10, 3.11)
+  - Codecov integration for code coverage tracking
+  - Linting and formatting checks
+
 - **Playwright scraper** (`scraper_playwright.py`)
   - Login mode: headed browser for manual GitHub authentication
   - Run mode: headless export with saved session state

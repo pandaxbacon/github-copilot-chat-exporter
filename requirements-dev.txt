@@ -1,0 +1,17 @@
+# Development dependencies
+-r requirements.txt
+
+# Testing
+pytest==8.3.4
+pytest-cov==6.0.0
+pytest-asyncio==0.24.0
+pytest-mock==3.14.0
+
+# Linting & Formatting
+flake8==7.1.1
+black==24.10.0
+mypy==1.13.0
+
+# Type stubs
+types-requests==2.32.0.20241016
+
