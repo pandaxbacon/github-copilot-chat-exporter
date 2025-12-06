@@ -3,7 +3,7 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)
 ![Playwright](https://img.shields.io/badge/playwright-1.48.0-green)
-![Homebrew](https://img.shields.io/badge/homebrew-pandaxbacon%2Ftap-orange)
+[![Homebrew](https://img.shields.io/badge/homebrew-pandaxbacon%2Ftap-orange)](https://github.com/pandaxbacon/homebrew-tap)
 
 **Export GitHub Copilot shared conversations to clean Markdown and PDF. No API key required!**
 
