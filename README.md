@@ -3,6 +3,7 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)
 ![Playwright](https://img.shields.io/badge/playwright-1.48.0-green)
+![Homebrew](https://img.shields.io/badge/homebrew-pandaxbacon%2Ftap-orange)
 
 **Export GitHub Copilot shared conversations to clean Markdown and PDF. No API key required!**
 
@@ -21,12 +22,23 @@ A Python-based toolkit to extract and archive GitHub Copilot chat share pages wi
 
 ## Installation
 
-### Prerequisites
+### macOS/Linux (Homebrew) - Recommended
+
+```bash
+brew tap pandaxbacon/tap
+brew install copilot-exporter
+```
+
+That's it! The `copilot-exporter` command is now available.
+
+### All Platforms (Manual Setup)
+
+#### Prerequisites
 
 * Python 3.9 or higher
 * pip (Python package installer)
 
-### Setup
+#### Setup
 
 1. **Create a virtual environment:**
 
@@ -44,9 +56,31 @@ python -m playwright install chromium
 
 ## Quick Start
 
-### 1. Authenticate (One-time setup)
+### Homebrew Users
 
-Run the login script to save your GitHub session:
+1. **Authenticate (One-time setup):**
+
+```bash
+copilot-exporter --mode login --url https://github.com/copilot/share/YOUR-SHARE-ID
+```
+
+* A browser window will open
+* Sign in to GitHub
+* Press **Enter** in the terminal to save authentication
+
+2. **Export Conversations:**
+
+```bash
+# Markdown only
+copilot-exporter --mode run --url https://github.com/copilot/share/YOUR-SHARE-ID
+
+# With PDF
+copilot-exporter --mode run --url https://github.com/copilot/share/YOUR-SHARE-ID --pdf
+```
+
+### Manual Setup Users
+
+1. **Authenticate (One-time setup):**
 
 ```bash
 python scraper_playwright.py --mode login --url https://github.com/copilot/share/YOUR-SHARE-ID
@@ -56,17 +90,12 @@ python scraper_playwright.py --mode login --url https://github.com/copilot/share
 * Sign in to GitHub
 * Press **Enter** in the terminal to save `storage_state.json`
 
-### 2. Export Conversations
-
-Once authenticated, export any share URL:
+2. **Export Conversations:**
 
 ```bash
 python scraper_playwright.py --mode run --url https://github.com/copilot/share/YOUR-SHARE-ID
-```
 
-**With PDF output:**
-
-```bash
+# With PDF
 python scraper_playwright.py --mode run --url https://github.com/copilot/share/YOUR-SHARE-ID --pdf
 ```
 
