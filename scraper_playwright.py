@@ -12,7 +12,7 @@ import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, List, Tuple
 
 from playwright.async_api import async_playwright
 
@@ -37,16 +37,16 @@ class Message:
 def flatten_content(raw: Any) -> str:
     """
     Recursively flatten nested content structures to plain text.
-    
+
     Handles JSON API responses where content may be nested in lists, dicts,
     or stored under keys like "content", "text", or "body".
-    
+
     Args:
         raw: Any structure (str, list, dict, or other) to flatten
-        
+
     Returns:
         Flattened string representation
-        
+
     Examples:
         >>> flatten_content("Hello")
         'Hello'
@@ -72,16 +72,16 @@ def flatten_content(raw: Any) -> str:
 def extract_messages_from_json(obj: Any) -> List[Message]:
     """
     Extract chat messages from JSON API responses.
-    
+
     Walks the JSON structure looking for "messages" arrays containing
     objects with "role" and "content"/"text"/"parts" fields.
-    
+
     Args:
         obj: JSON object (dict or list) from API response
-        
+
     Returns:
         List of Message objects with role and content
-        
+
     Examples:
         >>> data = {"messages": [{"role": "user", "content": "Hello"}]}
         >>> msgs = extract_messages_from_json(data)
@@ -93,14 +93,24 @@ def extract_messages_from_json(obj: Any) -> List[Message]:
     found: List[Message] = []
 
     def walk(node: Any) -> None:
-        nonlocal found
+        nonlocal found  # noqa: F824
         if isinstance(node, dict):
             if "messages" in node and isinstance(node["messages"], list):
                 candidate = []
                 for item in node["messages"]:
-                    if isinstance(item, dict) and "role" in item and any(k in item for k in ("content", "text", "parts")):
-                        content = item.get("content") or item.get("text") or item.get("parts")
-                        candidate.append(Message(role=str(item["role"]), content=flatten_content(content)))
+                    if (
+                        isinstance(item, dict)
+                        and "role" in item
+                        and any(k in item for k in ("content", "text", "parts"))
+                    ):
+                        content = (
+                            item.get("content") or item.get("text") or item.get("parts")
+                        )
+                        candidate.append(
+                            Message(
+                                role=str(item["role"]), content=flatten_content(content)
+                            )
+                        )
                 if candidate:
                     found.extend(candidate)
                     return
@@ -117,13 +127,13 @@ def extract_messages_from_json(obj: Any) -> List[Message]:
 def messages_to_markdown(messages: List[Message]) -> str:
     """
     Convert a list of messages to clean Markdown format.
-    
+
     Args:
         messages: List of Message objects with role and content
-        
+
     Returns:
         Formatted Markdown string with headers and content
-        
+
     Examples:
         >>> msgs = [Message(role="user", content="Hello"), Message(role="assistant", content="Hi!")]
         >>> md = messages_to_markdown(msgs)
@@ -143,19 +153,19 @@ def messages_to_markdown(messages: List[Message]) -> str:
 async def capture_login(url: str) -> None:
     """
     Launch headed browser for manual GitHub login and save authentication state.
-    
+
     Opens a visible browser window, navigates to the share URL, waits for the user
     to complete GitHub login, then saves cookies/localStorage to storage_state.json
     for reuse in headless runs.
-    
+
     Args:
         url: GitHub Copilot share page URL to navigate to
-        
+
     Side effects:
         - Launches headed Chromium browser
         - Waits for user input (Enter key)
         - Writes storage_state.json to disk
-        
+
     Examples:
         >>> asyncio.run(capture_login("https://github.com/copilot/share/..."))
         [action] Complete GitHub login in the opened browser, then press Enter...
@@ -178,16 +188,16 @@ async def capture_login(url: str) -> None:
 async def extract_from_dom(page) -> List[Message]:
     """
     Extract messages from the rendered DOM when JSON API extraction fails.
-    
+
     Fallback method that uses CSS selectors to find message containers,
     extracts role (from data attributes or labels), and content text.
-    
+
     Args:
         page: Playwright Page object with rendered content
-        
+
     Returns:
         List of Message objects extracted from DOM
-        
+
     Note:
         Tries multiple selectors (MESSAGE_SELECTORS) and stops at first match.
         GitHub may change their DOM structure; update selectors if needed.
@@ -198,7 +208,11 @@ async def extract_from_dom(page) -> List[Message]:
         if not elements:
             continue
         for el in elements:
-            role = await el.get_attribute("data-author") or await el.get_attribute("data-role") or "unknown"
+            role = (
+                await el.get_attribute("data-author")
+                or await el.get_attribute("data-role")
+                or "unknown"
+            )
             label = await el.query_selector("header, h2, h3, h4, .Label, .TextLabel")
             if label:
                 text = (await label.inner_text()).strip()
@@ -216,21 +230,21 @@ async def extract_from_dom(page) -> List[Message]:
 async def run_export(url: str, pdf: bool) -> None:
     """
     Export a Copilot share page to Markdown (and optionally PDF) using saved auth.
-    
+
     Runs headless Playwright with storage_state.json for authentication, captures
     JSON API responses and DOM content, then exports to chat-export.md and
     optionally chat-export.pdf.
-    
+
     Args:
         url: GitHub Copilot share page URL to export
         pdf: If True, also generate chat-export.pdf
-        
+
     Side effects:
         - Requires storage_state.json (from --mode login)
         - Writes chat-export.md, optionally chat-export.pdf
         - Writes page.html for debugging
         - Exits with code 1 if auth missing, 2 if no messages extracted
-        
+
     Examples:
         >>> asyncio.run(run_export("https://github.com/copilot/share/...", pdf=True))
         [ok] Wrote chat-export.md
@@ -293,10 +307,19 @@ async def run_export(url: str, pdf: bool) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Playwright exporter for Copilot share pages.")
-    parser.add_argument("--mode", choices=["login", "run"], default="run", help="login: headed auth, run: headless export")
+    parser = argparse.ArgumentParser(
+        description="Playwright exporter for Copilot share pages."
+    )
+    parser.add_argument(
+        "--mode",
+        choices=["login", "run"],
+        default="run",
+        help="login: headed auth, run: headless export",
+    )
     parser.add_argument("--url", default=DEFAULT_URL, help="Share URL to load")
-    parser.add_argument("--pdf", action="store_true", help="Render PDF alongside Markdown")
+    parser.add_argument(
+        "--pdf", action="store_true", help="Render PDF alongside Markdown"
+    )
     args = parser.parse_args()
 
     if args.mode == "login":
@@ -307,4 +330,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
