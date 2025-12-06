@@ -7,6 +7,7 @@ import asyncio
 import json
 import tempfile
 import os
+import subprocess
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -713,11 +714,14 @@ with patch('scraper_playwright.asyncio.run'):
     print("main function exists and is callable")
 """
         
+        # Get the repository root directory (parent of tests directory)
+        repo_root = Path(__file__).parent.parent
+        
         result = subprocess.run(
             [sys.executable, '-c', test_script],
             capture_output=True,
             text=True,
-            cwd='/home/runner/work/github-copilot-chat-exporter/github-copilot-chat-exporter'
+            cwd=str(repo_root)
         )
         
         assert result.returncode == 0
