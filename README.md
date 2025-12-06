@@ -26,7 +26,7 @@ A Python-based toolkit to extract and archive GitHub Copilot chat share pages wi
 
 ```bash
 brew tap pandaxbacon/tap
-brew install copilot-exporter
+brew install github-copilot-chat-exporter
 ```
 
 That's it! The `copilot-exporter` command is now available.
