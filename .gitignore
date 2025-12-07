@@ -35,6 +35,11 @@ chat-export.md
 chat-export.pdf
 page.html
 *.md.bak
+export_output/
+chat-export-full.zip
+export.json
+export.html
+export.txt
 
 # IDE
 .vscode/

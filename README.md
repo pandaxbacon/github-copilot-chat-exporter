@@ -137,6 +137,7 @@ Runs headless using saved authentication. Exports to Markdown and optionally PDF
 | `--mode` | `login` or `run` | `run` |
 | `--url` | GitHub Copilot share URL | Sample URL |
 | `--pdf` | Generate PDF alongside Markdown | `False` |
+| `--with-assets` | Include images, attachments, charts (ZIP) | `False` |
 
 ### Requests Scraper (Public pages only)
 
@@ -183,6 +184,21 @@ async def batch_export():
 
 asyncio.run(batch_export())
 ```
+
+### Export with Rich Content (Images, Attachments, Charts)
+
+```bash
+python scraper_playwright.py --mode run --url <SHARE_URL> --with-assets --pdf
+```
+
+This creates a ZIP archive containing:
+* `chat-export.md` - Markdown with relative image paths
+* `images/` - All downloaded images
+* `attachments/` - File attachments (if accessible)
+* `charts/` - Screenshots of canvas/SVG visualizations
+* `page.html` - Debug artifact
+
+**Note:** See [LIMITATIONS.md](LIMITATIONS.md) for details on what can be captured.
 
 ## Output Format
 
