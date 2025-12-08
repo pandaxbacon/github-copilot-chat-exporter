@@ -29,19 +29,18 @@ URLS = [
 ]
 
 
-async def export_with_custom_name(url: str, index: int, pdf: bool = False):
+async def export_with_custom_name(url: str, index: int):
     """
     Export a URL and rename output files with timestamp and index.
     
     Args:
         url: Share URL to export
         index: Numeric index for this export
-        pdf: Whether to also generate PDF
     """
     print(f"\n[{index + 1}/{len(URLS)}] Exporting: {url}")
     
     try:
-        await run_export(url, pdf=pdf)
+        await run_export(url)
         
         # Rename outputs with timestamp and index
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -52,13 +51,6 @@ async def export_with_custom_name(url: str, index: int, pdf: bool = False):
         if md_src.exists():
             md_src.rename(md_dst)
             print(f"  ✓ Saved: {md_dst}")
-        
-        if pdf:
-            pdf_src = Path("chat-export.pdf")
-            pdf_dst = Path(f"{base_name}.pdf")
-            if pdf_src.exists():
-                pdf_src.rename(pdf_dst)
-                print(f"  ✓ Saved: {pdf_dst}")
         
         html_src = Path("page.html")
         html_dst = Path(f"{base_name}.html")
@@ -78,7 +70,7 @@ async def main():
     print("=" * 60)
     
     for i, url in enumerate(URLS):
-        await export_with_custom_name(url, i, pdf=True)
+        await export_with_custom_name(url, i)
         
         # Brief delay between exports to be respectful to servers
         if i < len(URLS) - 1:
@@ -90,4 +82,5 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 

@@ -7,19 +7,21 @@
 [![Python CI](https://github.com/pandaxbacon/github-copilot-chat-exporter/actions/workflows/python-ci.yml/badge.svg)](https://github.com/pandaxbacon/github-copilot-chat-exporter/actions)
 [![codecov](https://codecov.io/gh/pandaxbacon/github-copilot-chat-exporter/branch/main/graph/badge.svg)](https://codecov.io/gh/pandaxbacon/github-copilot-chat-exporter)
 
-**Export GitHub Copilot shared conversations to clean Markdown and PDF. No API key required!**
+**Export GitHub Copilot shared conversations to clean Markdown with inline attachments. No API key required!**
 
-A Python-based toolkit to extract and archive GitHub Copilot chat share pages with full authentication support and multiple output formats.
+A Python-based toolkit to extract and archive GitHub Copilot chat share pages with full authentication support, file attachment capture, and inline file linking.
 
 ## Features
 
-* ✅ Export Copilot shared conversations to Markdown and PDF
+* ✅ Export Copilot shared conversations to Markdown
+* ✅ **File attachment capture** - Extracts CSV, TXT, JSON, YAML, XML, MD, and code files
+* ✅ **Inline attachment links** - Files appear where they're referenced in the conversation
 * ✅ Authenticated access via manual login (saves reusable session state)
 * ✅ Headless automation with Playwright
 * ✅ Fallback static scraper for public pages
 * ✅ JSON API extraction with DOM fallback
 * ✅ Debugging artifacts (`page.html`, network logs)
-* ✅ Clean, readable output format
+* ✅ Clean, simple folder structure (attachments only)
 * ✅ Works on macOS, Linux, and Windows
 
 ## Installation
@@ -73,11 +75,11 @@ copilot-exporter --mode login --url https://github.com/copilot/share/YOUR-SHARE-
 2. **Export Conversations:**
 
 ```bash
-# Markdown only
+# Markdown only (text and code blocks)
 copilot-exporter --mode run --url https://github.com/copilot/share/YOUR-SHARE-ID
 
-# With PDF
-copilot-exporter --mode run --url https://github.com/copilot/share/YOUR-SHARE-ID --pdf
+# With file attachments (captures CSV, TXT, JSON, YAML, code files, etc.)
+copilot-exporter --mode run --url https://github.com/copilot/share/YOUR-SHARE-ID --with-assets
 ```
 
 ### Manual Setup Users
@@ -97,16 +99,17 @@ python scraper_playwright.py --mode login --url https://github.com/copilot/share
 ```bash
 python scraper_playwright.py --mode run --url https://github.com/copilot/share/YOUR-SHARE-ID
 
-# With PDF
-python scraper_playwright.py --mode run --url https://github.com/copilot/share/YOUR-SHARE-ID --pdf
+# With CSV attachments (captures uploaded and generated files)
+python scraper_playwright.py --mode run --url https://github.com/copilot/share/YOUR-SHARE-ID --with-assets
 ```
 
 ### Output Files
 
-* `chat-export.md` - Clean Markdown format
-* `chat-export.pdf` - Rendered PDF (if `--pdf` flag is used)
+* `chat-export.md` - Clean Markdown format with inline attachment links
 * `page.html` - Full page HTML for debugging
 * `storage_state.json` - Saved authentication state (reusable)
+* Asset folder (when using `--with-assets`):
+  * `output/<conversation>/attachments/` - CSV files and user uploads with inline links
 
 ## Usage
 
@@ -125,10 +128,10 @@ Opens a headed browser for manual GitHub login, then saves authentication to `st
 #### Export Mode
 
 ```bash
-python scraper_playwright.py --mode run --url <SHARE_URL> [--pdf]
+python scraper_playwright.py --mode run --url <SHARE_URL> [--with-assets]
 ```
 
-Runs headless using saved authentication. Exports to Markdown and optionally PDF.
+Runs headless using saved authentication. Exports to Markdown with optional attachment capture.
 
 **Options:**
 
@@ -136,7 +139,7 @@ Runs headless using saved authentication. Exports to Markdown and optionally PDF
 |------|-------------|---------|
 | `--mode` | `login` or `run` | `run` |
 | `--url` | GitHub Copilot share URL | Sample URL |
-| `--pdf` | Generate PDF alongside Markdown | `False` |
+| `--with-assets` | Capture CSV files and attachments | `False` |
 
 ### Requests Scraper (Public pages only)
 
@@ -160,7 +163,7 @@ from scraper_playwright import run_export
 
 asyncio.run(run_export(
     url="https://github.com/copilot/share/YOUR-SHARE-ID",
-    pdf=False
+    with_assets=False  # Set to True to capture CSV files
 ))
 ```
 
@@ -178,7 +181,7 @@ urls = [
 
 async def batch_export():
     for url in urls:
-        await run_export(url, pdf=True)
+        await run_export(url, with_assets=True)
         print(f"✓ Exported {url}")
 
 asyncio.run(batch_export())
@@ -202,13 +205,38 @@ That's exactly the right instinct:
 ...
 ```
 
-### PDF Output
+### Attachments & Folder Structure (`--with-assets`)
 
-When `--pdf` is specified, a formatted PDF is generated with:
-* Full conversation history
-* Proper code block formatting
-* Readable typography
-* A4 page format
+When `--with-assets` is set, exports are organized under `output/<conversation>/`:
+
+```
+output/
+  conversation-title/
+    chat-export.md           # Markdown with inline attachment links
+    page.html                # Debug artifact
+    attachments/
+      aia-glossary-001.csv            # User-uploaded CSV
+      aia-glossary-cleaned-001.csv    # Copilot-generated CSV
+      image-001.png                   # User-uploaded image
+```
+
+**Inline Attachment Links:**
+
+Attachments appear directly where they're referenced in the conversation:
+
+```markdown
+## User
+📎 **Attachment:** [aia_glossary.csv](attachments/aia-glossary-001.csv)
+
+here you are file
+
+## Assistant  
+Here's the cleaned file I produced:
+
+📎 **Attachment:** [aia_glossary_cleaned.csv](attachments/aia-glossary-cleaned-001.csv)
+```
+
+See [`examples/sample-export/`](examples/sample-export/) for a complete real-world example.
 
 ## Troubleshooting
 

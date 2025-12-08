@@ -425,3 +425,4 @@ class TestLooksLikeLoginExtended:
         mock_response.text = "SIGN IN TO GITHUB"
         assert looks_like_login(mock_response) is True
 
+

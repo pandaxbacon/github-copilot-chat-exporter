@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Optional asset capture flag (`--with-assets` / `--capture-assets`) to download
+  images, attachments, and chart screenshots alongside exports.
+- Organized output directories per conversation under `output/` with relative
+  Markdown references to downloaded assets.
+
 ### Planned
 - Batch export mode with multiple URLs
 - Custom selector configuration for DOM changes
