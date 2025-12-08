@@ -33,8 +33,22 @@ MESSAGE_SELECTORS = [
 ]
 # Supported attachment file extensions for side panel extraction
 SUPPORTED_ATTACHMENTS = [
-    '.csv', '.txt', '.json', '.xml', '.yaml', '.yml', '.md',
-    '.py', '.js', '.ts', '.java', '.cpp', '.c', '.h', '.go', '.rs'
+    ".csv",
+    ".txt",
+    ".json",
+    ".xml",
+    ".yaml",
+    ".yml",
+    ".md",
+    ".py",
+    ".js",
+    ".ts",
+    ".java",
+    ".cpp",
+    ".c",
+    ".h",
+    ".go",
+    ".rs",
 ]
 
 
@@ -90,9 +104,7 @@ def infer_extension_from_mime(mime: str) -> str:
     return mapping.get(mime.lower(), ".bin")
 
 
-def unique_filename(
-    base_dir: Path, stem: str, ext: str, used: Optional[Set[str]] = None
-) -> str:
+def unique_filename(base_dir: Path, stem: str, ext: str, used: Optional[Set[str]] = None) -> str:
     """Generate a unique filename within base_dir using a counter suffix."""
     used = used or set()
     counter = 1
@@ -149,9 +161,7 @@ def flatten_content(raw: Any) -> str:
     return str(raw)
 
 
-async def save_data_uri(
-    data_uri: str, images_dir: Path, used_names: Set[str]
-) -> Optional[str]:
+async def save_data_uri(data_uri: str, images_dir: Path, used_names: Set[str]) -> Optional[str]:
     """Persist a base64 data URI to disk and return relative path."""
     try:
         header, encoded = data_uri.split(",", 1)
@@ -167,9 +177,7 @@ async def save_data_uri(
         return None
 
 
-async def download_binary(
-    request_ctx, url: str, dest_dir: Path, stem: str, used_names: Set[str]
-) -> Optional[str]:
+async def download_binary(request_ctx, url: str, dest_dir: Path, stem: str, used_names: Set[str]) -> Optional[str]:
     """Download a binary resource via Playwright's request context."""
     try:
         resp = await request_ctx.get(url, timeout=20_000)
@@ -211,7 +219,7 @@ async def capture_attachments(page, export_root: Path) -> List[Dict[str, Any]]:
             continue
 
         # Skip navigation links (copilot UI, anchor links, etc.)
-        if any(nav in href for nav in ['/copilot/c/', '/copilot/agents', '/copilot/spaces', '/spark', '#']):
+        if any(nav in href for nav in ["/copilot/c/", "/copilot/agents", "/copilot/spaces", "/spark", "#"]):
             continue
 
         name_hint = anchor.get("download") or Path(urlparse(href).path).name or "attachment"
@@ -264,16 +272,16 @@ async def capture_file_attachments(page, export_root: Path) -> List[Dict[str, An
         ensure_directory(attachments_dir)
         used_names: Set[str] = set()
         results: List[Dict[str, Any]] = []
-        
+
         print("[info] Looking for file attachment buttons...")
-        
+
         # Find all elements that might contain file attachments
         # 1. <a> tags with supported file extensions
         # 2. Reference token links (user uploads)
         file_buttons = []
-        
+
         # Strategy 1: Find <a> tags with supported extensions
-        all_links = await page.query_selector_all('a')
+        all_links = await page.query_selector_all("a")
         for link in all_links:
             try:
                 text = await link.text_content()
@@ -282,7 +290,7 @@ async def capture_file_attachments(page, export_root: Path) -> List[Dict[str, An
             except Exception as e:
                 print(f"[debug] Error reading link text: {e}")
                 continue
-        
+
         # Strategy 2: Find reference token links specifically
         ref_links = await page.query_selector_all("a[class*='ReferenceToken']")
         for link in ref_links:
@@ -294,9 +302,11 @@ async def capture_file_attachments(page, export_root: Path) -> List[Dict[str, An
                         file_buttons.append((link, text.strip()))
             except Exception:
                 continue
-        
+
         # Strategy 3: Find code block headers with supported file types (Copilot-generated files)
-        code_headers = await page.query_selector_all("[class*='CodeBlock'][class*='languageName'], [class*='languageName']")
+        code_headers = await page.query_selector_all(
+            "[class*='CodeBlock'][class*='languageName'], [class*='languageName']"
+        )
         for header in code_headers:
             try:
                 text = await header.text_content()
@@ -309,32 +319,34 @@ async def capture_file_attachments(page, export_root: Path) -> List[Dict[str, An
                             file_buttons.append((parent.as_element(), text.strip()))
             except Exception:
                 continue
-        
+
         print(f"[info] Found {len(file_buttons)} file attachment buttons")
-        
+
         for file_link, button_text in file_buttons:
             try:
                 print(f"[info] Clicking file button: {button_text}")
                 await file_link.click()
-                
+
                 # Wait for side panel to appear
                 await page.wait_for_timeout(2000)
-                
+
                 # Check if side panel opened
-                side_panel = await page.query_selector('xpath=/html/body/div[1]/div[7]/main/react-app/div/div/div[3]')
+                side_panel = await page.query_selector("xpath=/html/body/div[1]/div[7]/main/react-app/div/div/div[3]")
                 if not side_panel:
                     print(f"[warn] Side panel did not open for: {button_text}")
                     continue
-                
+
                 await page.wait_for_timeout(2000)
-                
+
                 # Extract content from the side panel
-                raw_content = await page.evaluate('''() => {
+                raw_content = await page.evaluate(
+                    """() => {
                     // Try to find content in the side panel
-                    const sidePanel = document.evaluate('/html/body/div[1]/div[7]/main/react-app/div/div/div[3]', 
-                                                        document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    const xpath = '/html/body/div[1]/div[7]/main/react-app/div/div/div[3]';
+                    const sidePanel = document.evaluate(
+                        xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null
+                    ).singleNodeValue;
                     if (!sidePanel) return "";
-                    
                     // Look for textboxes with CSV content
                     const textboxes = sidePanel.querySelectorAll('[role="textbox"]');
                     for (const box of textboxes) {
@@ -343,46 +355,46 @@ async def capture_file_attachments(page, export_root: Path) -> List[Dict[str, An
                             return text;
                         }
                     }
-                    
+
                     // Try to get all text from the panel
                     const allText = sidePanel.textContent || sidePanel.innerText || '';
                     if (allText.includes(',') && allText.length > 100) {
                         return allText;
                     }
-                    
+
                     return "";
-                }''')
-                
+                }"""
+                )
+
                 if raw_content and len(raw_content) > 50:
                     # Parse filename from button text
-                    attachment_filename = button_text.replace('name=', '').strip()
-                    
+                    attachment_filename = button_text.replace("name=", "").strip()
+
                     # Extract extension from filename
                     ext = Path(attachment_filename).suffix.lower()
                     if not ext or ext not in SUPPORTED_ATTACHMENTS:
-                        ext = '.txt'  # Default fallback
-                    
+                        ext = ".txt"  # Default fallback
+
                     stem = slugify(Path(attachment_filename).stem)
                     filename = unique_filename(attachments_dir, stem, ext, used_names)
-                    
+
                     # Save the raw file content without parsing
                     (attachments_dir / filename).write_text(raw_content)
-                    
+
                     print(f"[ok] Saved file: {filename} ({len(raw_content)} bytes)")
-                    
-                    results.append({
-                        "name": attachment_filename,
-                        "local_path": f"attachments/{filename}",
-                        "downloaded": True,
-                        "type": ext.lstrip('.')
-                    })
-                    
+
+                    results.append(
+                        {
+                            "name": attachment_filename,
+                            "local_path": f"attachments/{filename}",
+                            "downloaded": True,
+                            "type": ext.lstrip("."),
+                        }
+                    )
+
                     # Try to close the side panel with timeout
                     try:
-                        close_button = await page.wait_for_selector(
-                            'button:has-text("Close")', 
-                            timeout=2000
-                        )
+                        close_button = await page.wait_for_selector('button:has-text("Close")', timeout=2000)
                         if close_button:
                             await close_button.click()
                             await page.wait_for_timeout(500)
@@ -391,15 +403,16 @@ async def capture_file_attachments(page, export_root: Path) -> List[Dict[str, An
                         pass
                 else:
                     print(f"[warn] No content extracted from file button: {button_text}")
-                    
+
             except Exception as e:
                 print(f"[warn] Failed to capture file {button_text}: {e}")
-        
+
         return results
-    
+
     except Exception as e:
         print(f"[error] File attachment capture failed: {e}")
         import traceback
+
         traceback.print_exc()
         return []
 
@@ -439,54 +452,55 @@ def update_markdown_with_assets(
 ) -> str:
     """Insert inline attachment links where CSV files are referenced in markdown."""
     import re
+
     updated = markdown
-    
+
     # Build a lookup map: filename -> local_path
     attachment_map = {}
     for att in attachments:
         if att.get("downloaded") and att.get("local_path"):
             name = att.get("name", "")
             attachment_map[name] = att.get("local_path")
-    
+
     # First, replace explicit [ATTACHMENT:filename] markers if any
     def replace_attachment_marker(match):
         filename = match.group(1)
         # Match by comparing base names (without extensions and normalized)
-        file_base = Path(filename).stem.replace('-', '_').lower()
-        
+        file_base = Path(filename).stem.replace("-", "_").lower()
+
         for att_name, att_path in attachment_map.items():
-            att_base = Path(att_name).stem.replace('-', '_').lower()
+            att_base = Path(att_name).stem.replace("-", "_").lower()
             if file_base in att_base or att_base in file_base or filename.lower() == att_name.lower():
                 return f"📎 **Attachment:** [{filename}]({att_path})"
         return f"📎 **Attachment:** {filename} (not captured)"
-    
-    updated = re.sub(r'\[ATTACHMENT:([^\]]+)\]', replace_attachment_marker, updated)
-    
+
+    updated = re.sub(r"\[ATTACHMENT:([^\]]+)\]", replace_attachment_marker, updated)
+
     # Second, find code blocks with name=*.extension pattern and insert attachment links
     # Pattern: ```name=filename.ext (at start of line)
     def insert_file_link(match):
         full_match = match.group(0)
         filename_with_name = match.group(1).strip()  # e.g., "name=aia_glossary.csv"
-        filename = filename_with_name.replace('name=', '').strip()
-        
+        filename = filename_with_name.replace("name=", "").strip()
+
         # Find matching attachment
         for att_name, att_path in attachment_map.items():
             # Match by filename (handle underscores vs hyphens, ignore extension differences)
-            att_base = Path(att_name).stem.replace('-', '_').lower()
-            file_base = Path(filename).stem.replace('-', '_').lower()
-            
+            att_base = Path(att_name).stem.replace("-", "_").lower()
+            file_base = Path(filename).stem.replace("-", "_").lower()
+
             if filename in att_name or att_name in filename or att_base in file_base or file_base in att_base:
                 # Insert attachment link right before the code block
                 return f"📎 **Attachment:** [{filename}]({att_path})\n\n{full_match}"
-        
+
         # No match, return original
         return full_match
-    
+
     # Match code blocks with name=*.extension pattern (on its own line)
     # Build pattern to match any supported extension
-    ext_pattern = '|'.join([re.escape(ext) for ext in SUPPORTED_ATTACHMENTS])
-    updated = re.sub(rf'```(name=[^\n]+(?:{ext_pattern}))', insert_file_link, updated, flags=re.MULTILINE)
-    
+    ext_pattern = "|".join([re.escape(ext) for ext in SUPPORTED_ATTACHMENTS])
+    updated = re.sub(rf"```(name=[^\n]+(?:{ext_pattern}))", insert_file_link, updated, flags=re.MULTILINE)
+
     return updated
 
 
@@ -524,14 +538,8 @@ def extract_messages_from_json(obj: Any) -> List[Message]:
                         and "role" in item
                         and any(k in item for k in ("content", "text", "parts"))
                     ):
-                        content = (
-                            item.get("content") or item.get("text") or item.get("parts")
-                        )
-                        candidate.append(
-                            Message(
-                                role=str(item["role"]), content=flatten_content(content)
-                            )
-                        )
+                        content = item.get("content") or item.get("text") or item.get("parts")
+                        candidate.append(Message(role=str(item["role"]), content=flatten_content(content)))
                 if candidate:
                     found.extend(candidate)
                     return
@@ -609,37 +617,41 @@ async def capture_login(url: str) -> None:
 async def enhance_messages_with_attachments(page, messages: List[Message]) -> List[Message]:
     """
     Enhance message content with attachment references from DOM.
-    
+
     The JSON API doesn't include reference tokens (user-uploaded files),
     so we extract them from the DOM using JavaScript evaluation.
     """
     # Use JavaScript to find all reference tokens and their associated messages
-    attachment_info = await page.evaluate('''() => {
+    attachment_info = await page.evaluate(
+        """() => {
         const results = [];
         const containers = document.querySelectorAll('main .message-container');
-        
+
         containers.forEach((container, idx) => {
             // Get message text content
             const userMsg = container.querySelector('[class*="UserMessage"]');
             const markdownBody = container.querySelector('[class*="markdown-body"]');
             const contentEl = userMsg || markdownBody;
-            
+
             if (!contentEl) return;
-            
+
             const messageText = contentEl.textContent.trim().substring(0, 100);
-            
+
             // Find reference tokens
             const refTokens = container.querySelectorAll('[class*="ReferenceToken"][class*="name"]');
             const files = [];
-            
+
             refTokens.forEach(token => {
                 const text = token.textContent.trim();
-                const supportedExts = ['.csv', '.txt', '.json', '.xml', '.yaml', '.yml', '.md', '.py', '.js', '.ts', '.java', '.cpp', '.c', '.h', '.go', '.rs'];
+                const supportedExts = [
+                    '.csv', '.txt', '.json', '.xml', '.yaml', '.yml', '.md',
+                    '.py', '.js', '.ts', '.java', '.cpp', '.c', '.h', '.go', '.rs'
+                ];
                 if (text && supportedExts.some(ext => text.toLowerCase().includes(ext))) {
                     files.push(text);
                 }
             });
-            
+
             if (files.length > 0) {
                 results.push({
                     messageStart: messageText,
@@ -647,28 +659,29 @@ async def enhance_messages_with_attachments(page, messages: List[Message]) -> Li
                 });
             }
         });
-        
+
         return results;
-    }''')
-    
+    }"""
+    )
+
     # Build map
-    content_to_refs = {info['messageStart']: info['files'] for info in attachment_info}
-    
+    content_to_refs = {info["messageStart"]: info["files"] for info in attachment_info}
+
     # Enhance messages with reference tokens
     enhanced_messages = []
     for msg in messages:
         content = msg.content
         msg_start = content[:100]
-        
+
         # Check if this message has reference tokens
         if msg_start in content_to_refs:
             refs = content_to_refs[msg_start]
             # Prepend attachment markers
             for ref_file in refs:
                 content = f"[ATTACHMENT:{ref_file}]\n\n{content}"
-        
+
         enhanced_messages.append(Message(role=msg.role, content=content))
-    
+
     return enhanced_messages
 
 
@@ -695,11 +708,7 @@ async def extract_from_dom(page) -> List[Message]:
         if not elements:
             continue
         for el in elements:
-            role = (
-                await el.get_attribute("data-author")
-                or await el.get_attribute("data-role")
-                or "unknown"
-            )
+            role = await el.get_attribute("data-author") or await el.get_attribute("data-role") or "unknown"
             label = await el.query_selector("header, h2, h3, h4, .Label, .TextLabel")
             if label:
                 text = (await label.inner_text()).strip()
@@ -711,27 +720,27 @@ async def extract_from_dom(page) -> List[Message]:
             ref_spans = await el.query_selector_all(".ReferenceToken-module__name--nPIg4")
             for span in ref_spans:
                 try:
-                    token_text = (await token.inner_text()).strip()
+                    token_text = (await span.inner_text()).strip()
                     if token_text and any(ext in token_text.lower() for ext in SUPPORTED_ATTACHMENTS):
                         ref_files.append(token_text)
                 except Exception:
                     pass
-            
+
             content_el = await el.query_selector("pre, code, .markdown-body") or el
             text = (await content_el.inner_text()).strip()
-            
+
             # Prepend reference tokens at the start of message
             if ref_files:
                 for ref_file in ref_files:
                     text = f"[ATTACHMENT:{ref_file}]\n\n{text}"
-            
+
             # Check for file attachments in code blocks within this message (Copilot generated files)
             code_blocks = await el.query_selector_all(".CodeBlock-module__languageName--fxI6n, [class*='languageName']")
             for code_block in code_blocks:
                 filename = (await code_block.inner_text()).strip()
                 if filename and any(ext in filename.lower() for ext in SUPPORTED_ATTACHMENTS):
                     # Insert marker that will be replaced with actual link later
-                    filename_clean = filename.replace('name=', '').strip()
+                    filename_clean = filename.replace("name=", "").strip()
                     text += f"\n\n[ATTACHMENT:{filename_clean}]"
             if text:
                 messages.append(Message(role=role, content=text))
@@ -811,7 +820,7 @@ async def run_export(
             print("[warn] No messages extracted. Inspect page.html or network logs.")
             await browser.close()
             sys.exit(2)
-        
+
         # Enhance messages with DOM-based attachment references
         # (JSON API doesn't include reference tokens, so we need to extract them from DOM)
         messages = await enhance_messages_with_attachments(page, messages)
@@ -845,9 +854,7 @@ async def run_export(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Playwright exporter for Copilot share pages."
-    )
+    parser = argparse.ArgumentParser(description="Playwright exporter for Copilot share pages.")
     parser.add_argument(
         "--mode",
         choices=["login", "run"],
