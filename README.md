@@ -3,6 +3,7 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)
 ![Playwright](https://img.shields.io/badge/playwright-1.48.0-green)
+[![PyPI version](https://img.shields.io/pypi/v/github-copilot-chat-exporter.svg)](https://pypi.org/project/github-copilot-chat-exporter/)
 [![Homebrew](https://img.shields.io/badge/homebrew-pandaxbacon%2Ftap-orange)](https://github.com/pandaxbacon/homebrew-tap)
 [![Python CI](https://github.com/pandaxbacon/github-copilot-chat-exporter/actions/workflows/python-ci.yml/badge.svg)](https://github.com/pandaxbacon/github-copilot-chat-exporter/actions)
 [![codecov](https://codecov.io/gh/pandaxbacon/github-copilot-chat-exporter/branch/main/graph/badge.svg)](https://codecov.io/gh/pandaxbacon/github-copilot-chat-exporter)
