@@ -26,3 +26,4 @@
 - After login is captured, headless execution is sufficient for export (wait for `networkidle` and a short settle delay).
 - If exports return empty, rerun in headed mode to visually confirm the chat renders, then inspect `page.html`/network logs for updated selectors.
 
+

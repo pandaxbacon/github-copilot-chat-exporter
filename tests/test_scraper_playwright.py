@@ -359,7 +359,7 @@ class TestRunExport:
                 os.chdir(tmpdir)
                 
                 with pytest.raises(SystemExit) as exc_info:
-                    await run_export("https://test.url", pdf=False)
+                    await run_export("https://test.url")
                 
                 assert exc_info.value.code == 1
             finally:
@@ -411,7 +411,7 @@ class TestRunExport:
                 with patch('scraper_playwright.async_playwright', return_value=mock_async_playwright):
                     # Patch extract_from_dom to return messages (fallback path)
                     with patch('scraper_playwright.extract_from_dom', return_value=mock_messages):
-                        await run_export("https://test.url", pdf=False)
+                        await run_export("https://test.url")
                 
                 # Verify markdown file was created
                 assert Path("chat-export.md").exists()
@@ -429,56 +429,61 @@ class TestRunExport:
                 os.chdir(original_cwd)
 
     @pytest.mark.asyncio
-    async def test_run_export_with_pdf(self):
-        """Test export with PDF generation"""
+    # PDF functionality removed - test no longer needed
+    # async def test_run_export_with_pdf(self):
+
+    @pytest.mark.asyncio
+    async def test_run_export_with_assets_creates_structure(self):
+        """Test that asset mode creates attachments folder and captures CSV files"""
         with tempfile.TemporaryDirectory() as tmpdir:
             original_cwd = os.getcwd()
             try:
                 os.chdir(tmpdir)
-                
-                # Create a fake storage_state.json
                 Path("storage_state.json").write_text('{"cookies": []}')
-                
-                # Mock messages
-                mock_messages = [Message(role="user", content="Test")]
-                
-                # Mock page
+
+                # Message with attachment marker
+                mock_messages = [Message(role="user", content="[ATTACHMENT:test.csv]\n\nHello assets")]
+
                 mock_page = AsyncMock()
                 mock_page.goto = AsyncMock()
                 mock_page.wait_for_timeout = AsyncMock()
-                mock_page.content = AsyncMock(return_value="<html>Test</html>")
-                mock_page.pdf = AsyncMock()
+                mock_page.content = AsyncMock(return_value="<html>Asset test</html>")
+                mock_page.title = AsyncMock(return_value="My Chat")
                 mock_page.on = Mock()
-                
-                # Mock context and browser
+
                 mock_context = AsyncMock()
                 mock_context.new_page = AsyncMock(return_value=mock_page)
-                
+
                 mock_browser = AsyncMock()
                 mock_browser.new_context = AsyncMock(return_value=mock_context)
                 mock_browser.close = AsyncMock()
-                
+
                 mock_chromium = AsyncMock()
                 mock_chromium.launch = AsyncMock(return_value=mock_browser)
-                
+
                 mock_playwright = AsyncMock()
                 mock_playwright.chromium = mock_chromium
-                
+
                 mock_async_playwright = MagicMock()
                 mock_async_playwright.__aenter__ = AsyncMock(return_value=mock_playwright)
                 mock_async_playwright.__aexit__ = AsyncMock(return_value=None)
-                
+
                 with patch('scraper_playwright.async_playwright', return_value=mock_async_playwright):
-                    # Patch extract_from_dom to return messages (fallback path)
                     with patch('scraper_playwright.extract_from_dom', return_value=mock_messages):
-                        await run_export("https://test.url", pdf=True)
-                
-                # Verify PDF generation was called
-                mock_page.pdf.assert_called_once()
-                call_args = mock_page.pdf.call_args
-                assert call_args[1]['path'] == "chat-export.pdf"
-                assert call_args[1]['format'] == "A4"
-                
+                        with patch('scraper_playwright.enhance_messages_with_attachments', return_value=mock_messages):
+                            with patch('scraper_playwright.capture_images', return_value={}):
+                                with patch('scraper_playwright.capture_attachments', return_value=[]):
+                                    with patch('scraper_playwright.capture_file_attachments', return_value=[
+                                        {"name": "test.csv", "downloaded": True, "local_path": "attachments/test-001.csv"}
+                                    ]):
+                                        await run_export("https://test.url", with_assets=True)
+
+                export_root = Path("output") / "my-chat"
+                assert export_root.exists()
+                assert (export_root / "chat-export.md").exists()
+                content = (export_root / "chat-export.md").read_text()
+                # Should contain the inline attachment link
+                assert "test.csv" in content or "test-001.csv" in content
             finally:
                 os.chdir(original_cwd)
 
@@ -526,7 +531,7 @@ class TestRunExport:
                 mock_async_playwright.__aexit__ = AsyncMock(return_value=None)
                 
                 with patch('scraper_playwright.async_playwright', return_value=mock_async_playwright):
-                    await run_export("https://test.url", pdf=False)
+                    await run_export("https://test.url")
                 
                 # Verify markdown was created with DOM-extracted content
                 assert Path("chat-export.md").exists()
@@ -574,7 +579,7 @@ class TestRunExport:
                 
                 with patch('scraper_playwright.async_playwright', return_value=mock_async_playwright):
                     with pytest.raises(SystemExit) as exc_info:
-                        await run_export("https://test.url", pdf=False)
+                        await run_export("https://test.url")
                     
                     assert exc_info.value.code == 2
                 
@@ -622,7 +627,7 @@ class TestRunExport:
                 
                 with patch('scraper_playwright.async_playwright', return_value=mock_async_playwright):
                     with patch('scraper_playwright.extract_from_dom', return_value=mock_messages):
-                        await run_export("https://test.url", pdf=False)
+                        await run_export("https://test.url")
                 
                 # Verify page.html debug file was written
                 assert Path("page.html").exists()
@@ -665,16 +670,8 @@ class TestMain:
                     # Verify asyncio.run was called with run_export
                     mock_run.assert_called_once()
 
-    def test_main_run_mode_with_pdf(self):
-        """Test main function with PDF flag"""
-        test_args = ['scraper_playwright.py', '--mode', 'run', '--url', 'https://test.url', '--pdf']
-        
-        with patch('sys.argv', test_args):
-            with patch('scraper_playwright.asyncio.run') as mock_run:
-                main()
-                
-                # Verify asyncio.run was called
-                mock_run.assert_called_once()
+    # PDF functionality removed - test no longer needed
+    # def test_main_run_mode_with_pdf(self):
 
     def test_main_default_url(self):
         """Test main function uses default URL when not provided"""
@@ -783,7 +780,7 @@ class TestResponseHandlerLogic:
                 with patch('scraper_playwright.async_playwright', return_value=mock_async_playwright):
                     with patch('scraper_playwright.extract_from_dom', return_value=mock_messages):
                         # Start export
-                        export_task = asyncio.create_task(run_export("https://test.url", pdf=False))
+                        export_task = asyncio.create_task(run_export("https://test.url"))
                         
                         # Wait a bit for handler to be registered
                         await asyncio.sleep(0.1)

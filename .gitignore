@@ -55,3 +55,10 @@ coverage.xml
 # Logs
 *.log
 
+
+# Test exports and temporary files
+output/
+*.csv
+extract_*.py
+parse_*.py
+format_*.py

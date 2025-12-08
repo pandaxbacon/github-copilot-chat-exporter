@@ -28,10 +28,11 @@ async def main():
     print(f"Exporting: {url}")
     
     try:
-        await run_export(url, pdf=False)
+        await run_export(url)
         print("\n✓ Export complete!")
         print("  - chat-export.md")
         print("  - page.html (for debugging)")
+        print("\nFor CSV attachments, use: --with-assets flag")
     except SystemExit as e:
         if e.code == 1:
             print("\n✗ Error: storage_state.json not found")
@@ -43,4 +44,5 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
