@@ -150,9 +150,7 @@ def main() -> int:
         $ python scraper_requests.py --url https://github.com/copilot/share/...
         [warn] Page redirected to login. Static scraping will not work.
     """
-    parser = argparse.ArgumentParser(
-        description="Static HTML scraper for Copilot share pages."
-    )
+    parser = argparse.ArgumentParser(description="Static HTML scraper for Copilot share pages.")
     parser.add_argument("--url", default=DEFAULT_URL, help="Share URL to fetch")
     args = parser.parse_args()
 
@@ -160,16 +158,12 @@ def main() -> int:
     print(f"[info] GET {args.url} -> {resp.status_code} ({resp.url})")
 
     if looks_like_login(resp):
-        print(
-            "[warn] Page redirected to login or shows a login form. Static scraping will not work."
-        )
+        print("[warn] Page redirected to login or shows a login form. Static scraping will not work.")
         return 1
 
     messages = parse_messages(resp.text)
     if not messages:
-        print(
-            "[warn] No chat content found in static HTML; the page likely renders content client-side."
-        )
+        print("[warn] No chat content found in static HTML; the page likely renders content client-side.")
         return 2
 
     markdown = messages_to_markdown(messages)
